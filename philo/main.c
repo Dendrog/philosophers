@@ -6,13 +6,12 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:04 by jakim             #+#    #+#             */
-/*   Updated: 2024/06/25 22:46:21 by jakim            ###   ########.fr       */
+/*   Updated: 2024/06/27 22:48:17 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "philo.h"
 
-static pthread_mutex_t mutex;
 static t_stats stat;
 
 void	arg_set(t_stats *stat, char *argv[])
@@ -34,29 +33,34 @@ void	*logic(void *info)
 	in_stat.t_eat = stat.t_eat;
 
 	tmp = (t_info *)info;
-	while (1)	
+	while (1)
 	{
 		gettimeofday(&time, NULL);
-		printf("%ld%04ld %d is thinking\n", (time.tv_sec % 100), (time.tv_usec/1000), tmp->index + 1);
-		pthread_mutex_lock(&mutex);
-		*(tmp->fk1) = 1;
-		*(tmp->fk2) = 1;
+		//printf("%ld%03ld %d is thinking\n", (time.tv_sec % 100), (time.tv_usec/1000), tmp->index + 1);
+		printf("%ld %d is thinking\n", ((time.tv_sec * 1000) + (time.tv_usec / 1000)) - ((stat.time.tv_sec * 1000) + (stat.time.tv_usec / 1000)), tmp->index + 1);
+		pthread_mutex_lock(tmp->fk1);
+		pthread_mutex_lock(tmp->fk2);
 		gettimeofday(&time, NULL);
-		printf("%ld%04ld %d is eating\n",  (time.tv_sec % 100), (time.tv_usec/1000), tmp->index + 1);
+		//printf("%ld%03ld %d is eating\n",  (time.tv_sec % 100), (time.tv_usec/1000), tmp->index + 1);
+		printf("%ld %d is eating\n",  ((time.tv_sec * 1000) + (time.tv_usec / 1000)) - ((stat.time.tv_sec * 1000) + (stat.time.tv_usec / 1000)), tmp->index + 1);
 		usleep(in_stat.t_eat * 1000);
-		pthread_mutex_unlock(&mutex);
+		pthread_mutex_unlock(tmp->fk1);
+		pthread_mutex_unlock(tmp->fk2);
 		gettimeofday(&time, NULL);
-		printf("%ld%04ld %d is sleeping\n",  (time.tv_sec % 100), (time.tv_usec/1000), tmp->index + 1);
+		//printf("%ld%03ld %d is sleeping\n",  (time.tv_sec % 100), (time.tv_usec/1000), tmp->index + 1);
+		printf("%ld %d is sleeping\n",  ((time.tv_sec * 1000) + (time.tv_usec / 1000)) - ((stat.time.tv_sec * 1000) + (stat.time.tv_usec / 1000)), tmp->index + 1);
 		usleep(in_stat.t_sleep * 1000);
 	}
+	return (NULL);
 }
 
 int main(int argc, char *argv[])
 {
 	t_info *info;
 	pthread_t *th;
-	int *fk;
+	pthread_mutex_t *mt;
 	int i;
+	int id;
 
 	if (argc != 5)
 	{
@@ -67,31 +71,39 @@ int main(int argc, char *argv[])
 		arg_set(&stat, argv);
 	th = (pthread_t *)malloc(sizeof(pthread_t) * (stat.p_num + 5));
 	info = (t_info *)malloc(sizeof(t_info) * (stat.p_num + 5));
-	fk = (int *)malloc(sizeof(int) * (stat.p_num + 5));
+	mt = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * (stat.p_num + 5));
 	i = 0;
 	while (i < stat.p_num)
 	{
+		pthread_mutex_init(&mt[i], NULL);
 		if (i - 1 < 0)
-			info[i].fk1 = &fk[stat.p_num - 1];
+			info[i].fk1 = &mt[stat.p_num - 1];
 		else
-			info[i].fk1 = &fk[(i - 1) % stat.p_num];
-		info[i].fk2 = &fk[(i + 1) % stat.p_num];
+			info[i].fk1 = &mt[(i - 1) % stat.p_num];
+		info[i].fk2 = &mt[i];
 		info[i].index = i;
-		fk[i] = 1;
 		i++;
 	}
-	pthread_mutex_init(&mutex, NULL);
 	i = 0;
 	while (i < stat.p_num)
 	{
 		pthread_create(&th[i], NULL, logic, (void *)&info[i]);
 		i++;
 	}
-	pthread_join(th[0], NULL);
-	pthread_join(th[1], NULL);
-	pthread_join(th[2], NULL);
-	pthread_join(th[3], NULL);
-	pthread_join(th[4], NULL);
-
-	pthread_mutex_destroy(&mutex);
+	i=0;
+	gettimeofday(&stat.time, NULL);
+	while (i < stat.p_num)
+	{
+		pthread_join(th[i], NULL);
+		i++;
+	}
+	i = 0;
+	while (i < stat.p_num)
+	{
+		pthread_mutex_destroy(&mt[i]);
+		i++;
+	}
+	free(th);
+	free(info);
+	free(mt);
 }
