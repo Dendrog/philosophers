@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:10 by jakim             #+#    #+#             */
-/*   Updated: 2024/06/27 22:22:02 by jakim            ###   ########.fr       */
+/*   Updated: 2024/06/28 16:06:52 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@ typedef struct s_stats
 	int	t_die;
 	int	t_eat;
 	int	t_sleep;
+	int must_eat;
 	struct timeval time;
 } t_stats;
 
