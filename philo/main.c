@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:04 by jakim             #+#    #+#             */
-/*   Updated: 2024/06/28 17:56:39 by jakim            ###   ########.fr       */
+/*   Updated: 2024/06/29 22:50:58 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,24 @@ void	arg_set(t_stats *stat, int argc, char *argv[])
 		stat->must_eat = ft_atoi(argv[5]);
 	else
 		stat->must_eat = -1;
+}
+
+void	ft_sleep(int t)
+{
+	long long nowtime;
+	long long endtime;
+	struct timeval time;
+	gettimeofday(&time,NULL);
+	nowtime = time.tv_sec * 1000 + time.tv_usec / 1000;
+	endtime = nowtime + t;
+	while (1)
+	{
+		gettimeofday(&time,NULL);
+		if ((time.tv_sec * 1000 + time.tv_usec / 1000) - nowtime >= t)
+			break ;
+		else
+			usleep(10);
+	}
 }
 
 void	*logic(void *info)
@@ -46,40 +64,34 @@ void	*logic(void *info)
 	while (1)
 	{
 		gettimeofday(&time, NULL);
-		if (((last_time.tv_sec - in_stat.time.tv_sec) * 1000 + (last_time.tv_usec - in_stat.time.tv_usec) / 1000) > in_stat.t_die)
-		{
-			printf("1\n");
-			break ;
-		}
+		if (((time.tv_sec - last_time.tv_sec) * 1000 + (time.tv_usec - last_time.tv_usec) / 1000) >= in_stat.t_die)
+			break;
 		printf("%ld %d is thinking\n", ((time.tv_sec - in_stat.time.tv_sec) * 1000 + (time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
-		//printf("%ld %ld %d is thinking\n", time.tv_sec, in_stat.time.tv_sec, tmp->index + 1);
 		pthread_mutex_lock(tmp->fk1);
+		gettimeofday(&time, NULL);
+		printf("%ld %d has taken a fork\n", ((time.tv_sec - in_stat.time.tv_sec) * 1000 + (time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
 		pthread_mutex_lock(tmp->fk2);
-		if (((last_time.tv_sec - in_stat.time.tv_sec) * 1000 + (last_time.tv_usec - in_stat.time.tv_usec) / 1000) > in_stat.t_die)
+		gettimeofday(&time, NULL);
+		printf("%ld %d has taken a fork\n", ((time.tv_sec - in_stat.time.tv_sec) * 1000 + (time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
+		if (((time.tv_sec - last_time.tv_sec) * 1000 + (time.tv_usec - last_time.tv_usec) / 1000) >= in_stat.t_die)
 		{
-			printf("2\n");
 			pthread_mutex_unlock(tmp->fk1);
 			pthread_mutex_unlock(tmp->fk2);
 			break ;
 		}
 		gettimeofday(&last_time, NULL);
 		printf("%ld %d is eating\n", ((last_time.tv_sec - in_stat.time.tv_sec) * 1000 + (last_time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
-		usleep(in_stat.t_eat * 1000);
+		ft_sleep(in_stat.t_eat);
 		pthread_mutex_unlock(tmp->fk1);
 		pthread_mutex_unlock(tmp->fk2);
-		if (((last_time.tv_sec - in_stat.time.tv_sec) * 1000 + (last_time.tv_usec - in_stat.time.tv_usec) / 1000) > in_stat.t_die)
-		{
-			printf("3\n");
-			break ;
-		}
 		gettimeofday(&time, NULL);
-		printf("%ld %d is sleeping\n", ((time.tv_sec - in_stat.time.tv_sec) * 1000 + (time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
-		usleep(in_stat.t_sleep * 1000);
-		if (((last_time.tv_sec - in_stat.time.tv_sec) * 1000 + (last_time.tv_usec - in_stat.time.tv_usec) / 1000) > in_stat.t_die)
-		{
-			printf("4\n");
+		if (((time.tv_sec - last_time.tv_sec) * 1000 + (time.tv_usec - last_time.tv_usec) / 1000) >= in_stat.t_die)
 			break ;
-		}
+		printf("%ld %d is sleeping\n", ((time.tv_sec - in_stat.time.tv_sec) * 1000 + (time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
+		ft_sleep(in_stat.t_sleep);
+		gettimeofday(&time, NULL);
+		if (((time.tv_sec - last_time.tv_sec) * 1000 + (time.tv_usec - last_time.tv_usec) / 1000) >= in_stat.t_die)
+			break ;
 	}
 	gettimeofday(&time, NULL);
 	printf("%ld %d is died\n", ((time.tv_sec - in_stat.time.tv_sec) * 1000 + (time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
@@ -92,6 +104,7 @@ int main(int argc, char *argv[])
 	pthread_t *th;
 	pthread_mutex_t *mt;
 	int i;
+	pthread_mutex_t *tmp;
 	void **id;
 
 	if (argc < 5 || argc > 6)
@@ -113,14 +126,23 @@ int main(int argc, char *argv[])
 		else
 			info[i].fk1 = &mt[(i - 1) % stat.p_num];
 		info[i].fk2 = &mt[i];
+		if (i % 2 == 0)
+		{
+			tmp = info[i].fk2;
+			info[i].fk2 = info[i].fk1;
+			info[i].fk1 = tmp;
+		}
 		info[i].index = i;
 		i++;
 	}
 	i = 0;
 	gettimeofday(&stat.time, NULL);
+	//printf("%ld %ld\n",stat.time.tv_sec, stat.time.tv_usec);
+	//exit(0);
 	while (i < stat.p_num)
 	{
 		pthread_create(&th[i], NULL, logic, (void *)&info[i]);
+		//usleep(1);
 		i++;
 	}
 	i=0;
