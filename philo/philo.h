@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:10 by jakim             #+#    #+#             */
-/*   Updated: 2024/06/28 16:06:52 by jakim            ###   ########.fr       */
+/*   Updated: 2024/06/30 22:40:32 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@ typedef struct s_stats
 	int	t_eat;
 	int	t_sleep;
 	int must_eat;
+	int	*eat_count;
 	struct timeval time;
 } t_stats;
 
@@ -33,6 +34,7 @@ typedef struct s_info
 {
 	pthread_mutex_t	*fk1;
 	pthread_mutex_t *fk2;
+	pthread_mutex_t *eat_check;
 	int index;
 } t_info;
 
