@@ -6,7 +6,7 @@ SRCS =  main.c\
 HEADR = philo.h
 
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -g -fsanitize=address
+CFLAGS = -Wall -Wextra -Werror
 
 OBJS = $(SRCS:.c=.o)
 

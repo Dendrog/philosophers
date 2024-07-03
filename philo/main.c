@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:04 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/03 23:03:46 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/04 01:06:22 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,6 +97,19 @@ void	think(t_info *tmp, struct timeval last_time)
 		pthread_mutex_unlock(tmp->fork_check);
 		usleep(10);
 	}
+}
+
+void stat_set(t_stats *in_stat, t_stats *stat, struct timeval *last_time)
+{
+	in_stat->p_num = stat->p_num;
+	in_stat->t_die = stat->t_die;
+	in_stat->t_sleep = stat->t_sleep;
+	in_stat->t_eat = stat->t_eat;
+	in_stat->must_eat = stat->must_eat;
+	in_stat->time.tv_usec = stat->time.tv_usec;
+	in_stat->time.tv_sec = stat->time.tv_sec;
+	last_time->tv_sec = in_stat->time.tv_sec;
+	last_time->tv_usec = in_stat->time.tv_usec;
 }
 
 void	*logic(void *info)
