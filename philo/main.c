@@ -6,13 +6,18 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:04 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/01 23:17:31 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/03 23:03:46 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "philo.h"
 
 static t_stats stat;
+
+long long time_cal(struct timeval time1, struct timeval time2)
+{
+	return ((time1.tv_sec - time2.tv_sec) * 1000 + (time1.tv_usec - time2.tv_usec) / 1000);
+}
 
 int	arg_set(t_stats *stat, int argc, char *argv[])
 {
@@ -69,6 +74,7 @@ void	think(t_info *tmp, struct timeval last_time)
 {
 	struct timeval time;
 	gettimeofday(&time,NULL);
+	usleep(100);
 	while (1)
 	{
 		gettimeofday(&time,NULL);
@@ -83,29 +89,15 @@ void	think(t_info *tmp, struct timeval last_time)
 		}
 		pthread_mutex_unlock(tmp->eat_check);
 		pthread_mutex_lock(tmp->fork_check);
-		if (*(tmp->check1) == 0)// && *(tmp->check2) == 0)
+		if (*(tmp->check1) == 0 || *(tmp->check2) == 0)
 		{
 			pthread_mutex_unlock(tmp->fork_check);
 			break;
 		}
 		pthread_mutex_unlock(tmp->fork_check);
-		usleep(100);
+		usleep(10);
 	}
-	
 }
-
-/*void	time_correction(struct timeval *intime, struct timeval oritime, struct timeval nowtime, int cost)
-{
-	long long ori;
-	long long now;
-	//ori = oritime.tv_sec * 1000 + oritime.tv_usec / 1000;
-	//now = nowtime.tv_sec * 1000 + nowtime.tv_usec / 1000;
-	oritime.tv_usec += cost % 1000 * 1000;
-	oritime.tv_sec += cost / 1000 * 1000;
-	intime->tv_usec = intime->tv_usec + (oritime.tv_usec - nowtime.tv_usec);
-	intime->tv_sec = intime->tv_sec + (oritime.tv_sec - nowtime.tv_sec);
-} // 1000*/
-//   1000000
 
 void	*logic(void *info)
 {
@@ -116,6 +108,7 @@ void	*logic(void *info)
 	struct timeval tmp_time;
 	int flag;
 	int i;
+
 	flag = 0;
 	in_stat.p_num = stat.p_num;
 	in_stat.t_die = stat.t_die;
@@ -127,15 +120,6 @@ void	*logic(void *info)
 	last_time.tv_sec = in_stat.time.tv_sec;
 	last_time.tv_usec = in_stat.time.tv_usec;
 	tmp = (t_info *)info;
-	/*
-	pthread_mutex_lock(tmp->eat_check);
-	if (stat.die > 0)
-	{
-		pthread_mutex_unlock(tmp->eat_check);
-		break;
-	}
-	pthread_mutex_unlock(tmp->eat_check);
-	*/
 	while (1)
 	{
 		if (tmp->fk1 == tmp->fk2)
@@ -184,8 +168,6 @@ void	*logic(void *info)
 		{
 			pthread_mutex_unlock(tmp->fk1);
 			pthread_mutex_unlock(tmp->fk2);
-			//*(tmp->check1) = 0;
-			//*(tmp->check2) = 0;
 			pthread_mutex_unlock(tmp->eat_check);
 			break;
 		}
@@ -193,7 +175,6 @@ void	*logic(void *info)
 		gettimeofday(&last_time, NULL);
 		printf("%ld %d is eating\n", ((last_time.tv_sec - in_stat.time.tv_sec) * 1000 + (last_time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
 		ft_sleep(in_stat.t_eat, tmp->eat_check, last_time, tmp);
-		//usleep(in_stat.t_eat * 1000);
 		pthread_mutex_unlock(tmp->fk1);
 		pthread_mutex_unlock(tmp->fk2);
 		pthread_mutex_lock(tmp->fork_check);
@@ -223,7 +204,6 @@ void	*logic(void *info)
 			pthread_mutex_unlock(tmp->eat_check);
 		}
 		gettimeofday(&time, NULL);
-		//time_correction(&in_stat.time, last_time, time, in_stat.t_eat);
 		pthread_mutex_lock(tmp->eat_check);
 		if (((time.tv_sec - last_time.tv_sec) * 1000 + (time.tv_usec - last_time.tv_usec- 1000) / 1000) > in_stat.t_die || stat.die > 0)
 		{
@@ -234,7 +214,6 @@ void	*logic(void *info)
 		printf("%ld %d is sleeping\n", ((time.tv_sec - in_stat.time.tv_sec) * 1000 + (time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
 		gettimeofday(&tmp_time, NULL);
 		ft_sleep(in_stat.t_sleep, tmp->eat_check, last_time, tmp);
-		//usleep(in_stat.t_sleep * 1000);
 		gettimeofday(&time, NULL);
 		pthread_mutex_lock(tmp->eat_check);
 		if (((time.tv_sec - last_time.tv_sec) * 1000 + (time.tv_usec - last_time.tv_usec- 1000) / 1000) > in_stat.t_die || stat.die > 0)
@@ -252,7 +231,7 @@ void	*logic(void *info)
 	pthread_mutex_unlock(tmp->eat_check);
 	return (NULL);
 }
-// 밀리는건 처리했는데 오차가 살짝씩 생김
+
 int main(int argc, char *argv[])
 {
 	t_info *info;
@@ -271,8 +250,13 @@ int main(int argc, char *argv[])
 		return (1);
 	}
 	else
+	{
 		if(arg_set(&stat, argc, argv))
+		{
+			printf("argument Error\n");
 			return (1);
+		}
+	}
 	th = (pthread_t *)malloc(sizeof(pthread_t) * (stat.p_num + 5));
 	info = (t_info *)malloc(sizeof(t_info) * (stat.p_num + 5));
 	mt = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * (stat.p_num + 5));
@@ -313,8 +297,6 @@ int main(int argc, char *argv[])
 		i++;
 	}
 	i = 0;
-	//printf("%ld %ld\n",stat.time.tv_sec, stat.time.tv_usec);
-	//exit(0);
 	while (i < stat.p_num)
 	{
 		if (i % 2)
