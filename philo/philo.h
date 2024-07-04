@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:10 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/01 22:37:33 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/04 16:48:42 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,8 @@ typedef struct s_info
 {
 	pthread_mutex_t	*fk1;
 	pthread_mutex_t *fk2;
+	pthread_mutex_t	*fk_check1;
+	pthread_mutex_t *fk_check2;
 	pthread_mutex_t *eat_check;
 	pthread_mutex_t *fork_check;
 	int *check1;
