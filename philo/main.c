@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
+/*   By: jakim <jakim@student.42gyeongsan.kr>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:04 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/04 17:21:04 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/05 17:21:16 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,11 +45,11 @@ int	arg_set(t_stats *stat, int argc, char *argv[])
 void	ft_sleep(int t, pthread_mutex_t *mt, struct timeval last_time, t_info *tmp)
 {
 	long long nowtime;
-	long long endtime;
+	//long long endtime;
 	struct timeval time;
 	gettimeofday(&time,NULL);
 	nowtime = time.tv_sec * 1000 + time.tv_usec / 1000;
-	endtime = nowtime + t;
+	//endtime = nowtime + t;
 	while (1)
 	{
 		gettimeofday(&time,NULL);
@@ -90,7 +90,7 @@ int	think(t_info *tmp, struct timeval last_time, int type)
 	}
 	gettimeofday(&time,NULL);
 	//pthread_mutex_lock(line);
-	usleep(100);
+	//usleep(100);
 	while (1)
 	{
 		gettimeofday(&time,NULL);
@@ -257,6 +257,7 @@ void	*logic(void *info)
 			break;
 		}
 		pthread_mutex_unlock(tmp->eat_check);
+		usleep(500);
 	}
 	gettimeofday(&time, NULL);
 	pthread_mutex_lock(tmp->eat_check);
@@ -342,9 +343,10 @@ int main(int argc, char *argv[])
 	i = 0;
 	while (i < stat.p_num)
 	{
+		if (i % 2 == 1)
+			usleep(10);
 		gettimeofday(&stat.time, NULL);
 		pthread_create(&th[i], NULL, logic, (void *)&info[i]);
-		usleep(100);
 		i++;
 	}
 	i=0;
