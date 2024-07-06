@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:04 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/06 20:14:42 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/06 21:59:40 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -132,15 +132,7 @@ void	*logic(void *info)
 	int i;
 
 	flag = 0;
-	in_stat.p_num = stat.p_num;
-	in_stat.t_die = stat.t_die;
-	in_stat.t_sleep = stat.t_sleep;
-	in_stat.t_eat = stat.t_eat;
-	in_stat.must_eat = stat.must_eat;
-	in_stat.time.tv_usec = stat.time.tv_usec;
-	in_stat.time.tv_sec = stat.time.tv_sec;
-	last_time.tv_sec = in_stat.time.tv_sec;
-	last_time.tv_usec = in_stat.time.tv_usec;
+	stat_set(&in_stat, &stat, &last_time);
 	tmp = (t_info *)info;
 	while (1)
 	{
@@ -254,17 +246,8 @@ void	*logic(void *info)
 	return (NULL);
 }
 
-int main(int argc, char *argv[])
+int	arg_check(t_stats *stats, int argc, char *argv[])
 {
-	t_info *info;
-	pthread_t *th;
-	pthread_mutex_t *mt;
-	pthread_mutex_t eat_check;
-	pthread_mutex_t fork_check;
-	int i;
-	pthread_mutex_t *tmp;
-	int *sw;
-
 	if (argc < 5 || argc > 6)
 	{
 		printf("argument Error\n");
@@ -278,14 +261,44 @@ int main(int argc, char *argv[])
 			return (1);
 		}
 	}
-	th = (pthread_t *)malloc(sizeof(pthread_t) * (stat.p_num + 5));
-	info = (t_info *)malloc(sizeof(t_info) * (stat.p_num + 5));
-	mt = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * (stat.p_num + 5));
-	stat.fks = (int *)malloc(sizeof(int) * (stat.p_num + 5));
-	stat.eat_count = (int *)malloc(sizeof(int) * (stat.p_num + 5));
-	i = 0;
+	return (0);
+}
+
+int	allocs(pthread_t **th, t_info **info, pthread_mutex_t **mt, t_stats *stat)
+{
+	*th = (pthread_t *)malloc(sizeof(pthread_t) * (stat->p_num + 5));
+	*info = (t_info *)malloc(sizeof(t_info) * (stat->p_num + 5));
+	*mt = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * (stat->p_num + 5));
+	stat->fks = (int *)malloc(sizeof(int) * (stat->p_num + 5));
+	stat->eat_count = (int *)malloc(sizeof(int) * (stat->p_num + 5));
+	if (!*th || !*info || !*mt || !stat->fks || !stat->eat_count)
+	{
+		free(*th);
+		free(*info);
+		free(*mt);
+		free(stat->fks);
+		free(stat->eat_count);
+		return (1);
+	}
+	return (0);
+}
+
+int main(int argc, char *argv[])
+{
+	t_info *info;
+	pthread_t *th;
+	pthread_mutex_t *mt;
+	pthread_mutex_t eat_check;
+	pthread_mutex_t fork_check;
+	pthread_mutex_t *tmp;
+	int i;
+	int *sw;
+
+	if (arg_check(&stat, argc, argv) || allocs(&th, &info, &mt, &stat))
+		return (1);
 	pthread_mutex_init(&eat_check, NULL);
 	pthread_mutex_init(&fork_check, NULL);
+	i = 0;
 	while (i < stat.p_num)
 	{
 		pthread_mutex_init(&mt[i], NULL);
@@ -338,7 +351,11 @@ int main(int argc, char *argv[])
 		pthread_mutex_destroy(&mt[i]);
 		i++;
 	}
+	pthread_mutex_destroy(&eat_check);
+	pthread_mutex_destroy(&fork_check);
 	free(th);
 	free(info);
 	free(mt);
+	free(stat.eat_count);
+	free(stat.fks);
 }
