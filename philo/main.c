@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jakim <jakim@student.42gyeongsan.kr>       +#+  +:+       +#+        */
+/*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:04 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/05 17:21:16 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/06 17:59:55 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,11 +45,9 @@ int	arg_set(t_stats *stat, int argc, char *argv[])
 void	ft_sleep(int t, pthread_mutex_t *mt, struct timeval last_time, t_info *tmp)
 {
 	long long nowtime;
-	//long long endtime;
 	struct timeval time;
 	gettimeofday(&time,NULL);
 	nowtime = time.tv_sec * 1000 + time.tv_usec / 1000;
-	//endtime = nowtime + t;
 	while (1)
 	{
 		gettimeofday(&time,NULL);
@@ -73,24 +71,19 @@ void	ft_sleep(int t, pthread_mutex_t *mt, struct timeval last_time, t_info *tmp)
 int	think(t_info *tmp, struct timeval last_time, int type)
 {
 	struct timeval time;
-	//pthread_mutex_t *line;
 	int	*check;
 	int *comp;
 	if (type == 1)
 	{
-		//line = tmp->fk_check1;
 		comp = NULL;
 		check = tmp->check1;
 	}
 	else
 	{
-		//line = tmp->fk_check2;
 		comp = tmp->check1;
 		check = tmp->check2;
 	}
 	gettimeofday(&time,NULL);
-	//pthread_mutex_lock(line);
-	//usleep(100);
 	while (1)
 	{
 		gettimeofday(&time,NULL);
@@ -100,7 +93,6 @@ int	think(t_info *tmp, struct timeval last_time, int type)
 			stat.die++;
 			if (stat.die == 1)
 				printf("%ld %d is died\n", ((time.tv_sec - stat.time.tv_sec) * 1000 + (time.tv_usec - stat.time.tv_usec) / 1000), tmp->index + 1);
-			//pthread_mutex_unlock(line);
 			pthread_mutex_unlock(tmp->eat_check);
 			return (1);
 		}
@@ -109,12 +101,10 @@ int	think(t_info *tmp, struct timeval last_time, int type)
 		if (*(check) == 0 && check != comp)
 		{
 			*(check) = 1;
-			//pthread_mutex_unlock(line);
 			pthread_mutex_unlock(tmp->fork_check);
 			return (0);
 		}
 		pthread_mutex_unlock(tmp->fork_check);
-		//usleep(10);
 	}
 }
 
@@ -154,8 +144,6 @@ void	*logic(void *info)
 	tmp = (t_info *)info;
 	while (1)
 	{
-		//if (tmp->fk1 == tmp->fk2)
-		//	break ;
 		gettimeofday(&time, NULL);
 		pthread_mutex_lock(tmp->eat_check);
 		if (((time.tv_sec - last_time.tv_sec) * 1000 + (time.tv_usec - last_time.tv_usec- 1000) / 1000) > in_stat.t_die || stat.die > 0)
@@ -178,11 +166,11 @@ void	*logic(void *info)
 		}
 		pthread_mutex_unlock(tmp->eat_check);
 		printf("%ld %d has taken a fork\n", ((time.tv_sec - in_stat.time.tv_sec) * 1000 + (time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
-		/*pthread_mutex_lock(tmp->fork_check);
-		*(tmp->check1) = 1;
-		pthread_mutex_unlock(tmp->fork_check);*/
 		if (think(tmp, last_time, 2))
-			break ; //
+		{
+			pthread_mutex_unlock(tmp->fk1);
+			break ;
+		}
 		pthread_mutex_lock(tmp->fk2);
 		gettimeofday(&time, NULL);
 		pthread_mutex_lock(tmp->eat_check);
@@ -195,9 +183,6 @@ void	*logic(void *info)
 		}
 		pthread_mutex_unlock(tmp->eat_check);
 		printf("%ld %d has taken a fork\n", ((time.tv_sec - in_stat.time.tv_sec) * 1000 + (time.tv_usec - in_stat.time.tv_usec) / 1000), tmp->index + 1);
-		/*pthread_mutex_lock(tmp->fork_check);
-		*(tmp->check2) = 1;
-		pthread_mutex_unlock(tmp->fork_check);*/
 		pthread_mutex_lock(tmp->eat_check);
 		if (((time.tv_sec - last_time.tv_sec) * 1000 + (time.tv_usec - last_time.tv_usec- 1000) / 1000) > in_stat.t_die || stat.die > 0)
 		{
@@ -257,7 +242,8 @@ void	*logic(void *info)
 			break;
 		}
 		pthread_mutex_unlock(tmp->eat_check);
-		usleep(500);
+		if (in_stat.p_num % 2 == 1)
+			usleep(500);
 	}
 	gettimeofday(&time, NULL);
 	pthread_mutex_lock(tmp->eat_check);
@@ -273,7 +259,6 @@ int main(int argc, char *argv[])
 	t_info *info;
 	pthread_t *th;
 	pthread_mutex_t *mt;
-	//pthread_mutex_t *fks;
 	pthread_mutex_t eat_check;
 	pthread_mutex_t fork_check;
 	int i;
@@ -296,7 +281,6 @@ int main(int argc, char *argv[])
 	th = (pthread_t *)malloc(sizeof(pthread_t) * (stat.p_num + 5));
 	info = (t_info *)malloc(sizeof(t_info) * (stat.p_num + 5));
 	mt = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * (stat.p_num + 5));
-	//fks = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t) * (stat.p_num + 5));
 	stat.fks = (int *)malloc(sizeof(int) * (stat.p_num + 5));
 	stat.eat_count = (int *)malloc(sizeof(int) * (stat.p_num + 5));
 	i = 0;
@@ -305,21 +289,17 @@ int main(int argc, char *argv[])
 	while (i < stat.p_num)
 	{
 		pthread_mutex_init(&mt[i], NULL);
-		//pthread_mutex_init(&fks[i], NULL);
 		if (i - 1 < 0)
 		{
 			info[i].fk1 = &mt[stat.p_num - 1];
 			info[i].check1 = &(stat.fks[stat.p_num - 1]);
-			//info[i].fk_check1 = &fks[stat.p_num - 1];
 		}
 		else
 		{
 			info[i].fk1 = &mt[(i - 1) % stat.p_num];
 			info[i].check1 = &(stat.fks[(i - 1) % stat.p_num]);
-			//info[i].fk_check1 = &fks[(i - 1) % stat.p_num];
 		}
 		info[i].fk2 = &mt[i];
-		//info[i].fk_check2 = &fks[i];
 		info[i].check2 = &(stat.fks[i]);
 		if (i % 2 == 0)
 		{
@@ -329,9 +309,6 @@ int main(int argc, char *argv[])
 			sw = info[i].check2;
 			info[i].check2 = info[i].check1;
 			info[i].check1 = sw;
-			//tmp = info[i].fk_check2;
-			//info[i].fk_check2 = info[i].fk_check1;
-			//info[i].fk_check1 = tmp;
 		}
 		stat.eat_count[i] = 0;
 		info[i].eat_check = &eat_check;
