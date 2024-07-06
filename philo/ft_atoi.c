@@ -6,27 +6,49 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/12 12:52:09 by jakim             #+#    #+#             */
-/*   Updated: 2024/06/25 18:39:03 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/06 20:13:54 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 
+static size_t	ft_strlen(const char *s)
+{
+	char	*str;
+	size_t	i;
+
+	i = 0;
+	str = (char *)s;
+	while (*str)
+	{
+		i++;
+		str++;
+	}
+	return (i);
+}
+
 int	ft_atoi(const char *nptr)
 {
 	int			sign;
+	int			size;
 	long long	result;
 
 	result = 0;
 	sign = 1;
+	size = ft_strlen(nptr);
 	while (*nptr == '\f' || *nptr == '\n' || *nptr == '\r' || \
 		*nptr == '\t' || *nptr == '\v' || *nptr == ' ')
 		nptr++;
 	if (*nptr == '-')
 		sign *= -1;
-	if (*nptr == '+' || *nptr == '-')
+	if (*nptr == '-')
 		nptr++;
 	while (*nptr >= '0' && *nptr <= '9')
+	{
 		result = (result * 10) + (long long)(*(nptr++) - '0');
+		size--;
+	}
+	if (size)
+		return (0);
 	return ((int)(result * sign));
 }
