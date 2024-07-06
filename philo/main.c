@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/11 22:05:04 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/06 21:59:40 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/06 22:34:13 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -283,37 +283,28 @@ int	allocs(pthread_t **th, t_info **info, pthread_mutex_t **mt, t_stats *stat)
 	return (0);
 }
 
-int main(int argc, char *argv[])
+void mutex_prepare(pthread_mutex_t *mt, t_stats *stat, t_info *info, pthread_mutex_t *eat_check, pthread_mutex_t *fork_check)
 {
-	t_info *info;
-	pthread_t *th;
-	pthread_mutex_t *mt;
-	pthread_mutex_t eat_check;
-	pthread_mutex_t fork_check;
-	pthread_mutex_t *tmp;
 	int i;
 	int *sw;
+	pthread_mutex_t *tmp;
 
-	if (arg_check(&stat, argc, argv) || allocs(&th, &info, &mt, &stat))
-		return (1);
-	pthread_mutex_init(&eat_check, NULL);
-	pthread_mutex_init(&fork_check, NULL);
 	i = 0;
-	while (i < stat.p_num)
+	while (i < stat->p_num)
 	{
 		pthread_mutex_init(&mt[i], NULL);
 		if (i - 1 < 0)
 		{
-			info[i].fk1 = &mt[stat.p_num - 1];
-			info[i].check1 = &(stat.fks[stat.p_num - 1]);
+			info[i].fk1 = &mt[stat->p_num - 1];
+			info[i].check1 = &(stat->fks[stat->p_num - 1]);
 		}
 		else
 		{
-			info[i].fk1 = &mt[(i - 1) % stat.p_num];
-			info[i].check1 = &(stat.fks[(i - 1) % stat.p_num]);
+			info[i].fk1 = &mt[(i - 1) % stat->p_num];
+			info[i].check1 = &(stat->fks[(i - 1) % stat->p_num]);
 		}
 		info[i].fk2 = &mt[i];
-		info[i].check2 = &(stat.fks[i]);
+		info[i].check2 = &(stat->fks[i]);
 		if (i % 2 == 0)
 		{
 			tmp = info[i].fk2;
@@ -323,13 +314,66 @@ int main(int argc, char *argv[])
 			info[i].check2 = info[i].check1;
 			info[i].check1 = sw;
 		}
-		stat.eat_count[i] = 0;
-		info[i].eat_check = &eat_check;
-		info[i].fork_check = &fork_check;
+		stat->eat_count[i] = 0;
+		info[i].eat_check = eat_check;
+		info[i].fork_check = fork_check;
 		info[i].index = i;
-		stat.fks[i] = 0;
+		stat->fks[i] = 0;
 		i++;
 	}
+}
+
+void	mutex_free(t_stats *stat, pthread_mutex_t *mt, pthread_mutex_t *eat_check, pthread_mutex_t *fork_check)
+{
+	int i;
+	
+	i = 0;
+	while (i < stat->p_num)
+	{
+		pthread_mutex_destroy(&mt[i]);
+		i++;
+	}
+	pthread_mutex_destroy(eat_check);
+	pthread_mutex_destroy(fork_check);
+}
+
+void	join(t_stats *stat, pthread_t *th)
+{
+	int i;
+
+	i = 0;
+	while (i < stat->p_num)
+	{
+		pthread_join(th[i], NULL);
+		i++;
+	}
+}
+
+void	last_free(pthread_t *th, t_info *info, pthread_mutex_t *mt, t_stats *stat)
+{
+	free(th);
+	free(info);
+	free(mt);
+	free(stat->eat_count);
+	free(stat->fks);
+}
+
+int main(int argc, char *argv[])
+{
+	t_info *info;
+	pthread_t *th;
+	pthread_mutex_t *mt;
+	pthread_mutex_t eat_check;
+	pthread_mutex_t fork_check;
+	pthread_mutex_t *tmp;
+	int i;
+	
+
+	if (arg_check(&stat, argc, argv) || allocs(&th, &info, &mt, &stat))
+		return (1);
+	pthread_mutex_init(&eat_check, NULL);
+	pthread_mutex_init(&fork_check, NULL);
+	mutex_prepare(mt, &stat, info, &eat_check, &fork_check);
 	i = 0;
 	while (i < stat.p_num)
 	{
@@ -339,23 +383,7 @@ int main(int argc, char *argv[])
 		pthread_create(&th[i], NULL, logic, (void *)&info[i]);
 		i++;
 	}
-	i=0;
-	while (i < stat.p_num)
-	{
-		pthread_join(th[i], NULL);
-		i++;
-	}
-	i = 0;
-	while (i < stat.p_num)
-	{
-		pthread_mutex_destroy(&mt[i]);
-		i++;
-	}
-	pthread_mutex_destroy(&eat_check);
-	pthread_mutex_destroy(&fork_check);
-	free(th);
-	free(info);
-	free(mt);
-	free(stat.eat_count);
-	free(stat.fks);
+	join(&stat, th);
+	mutex_free(&stat, mt, &eat_check, &fork_check);
+	last_free(th, info, mt, &stat);
 }
