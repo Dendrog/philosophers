@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/07 17:52:55 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/07 18:37:01 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/07 19:01:18 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,8 @@ static void	ending(struct timeval *time, t_stats *in_stat, t_info *tmp)
 	pthread_mutex_lock(tmp->eat_check);
 	tmp->stat->die++;
 	if (tmp->stat->die == 1)
-		printf("%ld %d is died\n", ((time->tv_sec - in_stat->time.tv_sec) * 1000 + (time->tv_usec - in_stat->time.tv_usec) / 1000), tmp->index + 1);
+		printf("%ld %d is died\n", \
+		timecal(*time, in_stat->time, 0), tmp->index + 1);
 	pthread_mutex_unlock(tmp->eat_check);
 }
 

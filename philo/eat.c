@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/07 17:51:48 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/07 18:42:00 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/07 18:59:22 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,8 @@ static int	all_eat(t_stats *in_stat, t_info *tmp, int flag)
 int	eating(struct timeval *last_time, t_stats *in_stat, t_info *tmp)
 {
 	gettimeofday(last_time, NULL);
-	printf("%ld %d is eating\n", ((last_time->tv_sec - in_stat->time.tv_sec) * 1000 + (last_time->tv_usec - in_stat->time.tv_usec) / 1000), tmp->index + 1);
+	printf("%ld %d is eating\n", \
+		timecal(*last_time, in_stat->time, 0), tmp->index + 1);
 	ft_sleep(in_stat->t_eat, tmp->eat_check, *last_time, tmp);
 	pthread_mutex_unlock(tmp->fk1);
 	pthread_mutex_unlock(tmp->fk2);

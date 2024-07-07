@@ -6,7 +6,7 @@
 /*   By: jakim <jakim@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/07 17:51:28 by jakim             #+#    #+#             */
-/*   Updated: 2024/07/07 18:42:11 by jakim            ###   ########.fr       */
+/*   Updated: 2024/07/07 18:59:34 by jakim            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,8 @@ int	take_fork1(struct timeval *time, struct timeval *last_time, \
 		return (1);
 	}
 	pthread_mutex_unlock(tmp->eat_check);
-	printf("%ld %d has taken a fork\n", ((time->tv_sec - in_stat->time.tv_sec) * 1000 + (time->tv_usec - in_stat->time.tv_usec) / 1000), tmp->index + 1);
+	printf("%ld %d has taken a fork\n", \
+		timecal(*time, in_stat->time, 0), tmp->index + 1);
 	if (think(tmp, *last_time, 2))
 	{
 		pthread_mutex_unlock(tmp->fk1);
@@ -48,9 +49,10 @@ int	take_fork2(struct timeval *time, struct timeval *last_time, \
 		return (1);
 	}
 	pthread_mutex_unlock(tmp->eat_check);
-	printf("%ld %d has taken a fork\n", ((time->tv_sec - in_stat->time.tv_sec) * 1000 + (time->tv_usec - in_stat->time.tv_usec) / 1000), tmp->index + 1);
+	printf("%ld %d has taken a fork\n", \
+		timecal(*time, in_stat->time, 0), tmp->index + 1);
 	pthread_mutex_lock(tmp->eat_check);
-	if (((time->tv_sec - last_time->tv_sec) * 1000 + (time->tv_usec - last_time->tv_usec - 1000) / 1000) > in_stat->t_die || tmp->stat->die > 0)
+	if (timecal(*time, *last_time, 1) > in_stat->t_die || tmp->stat->die > 0)
 	{
 		pthread_mutex_unlock(tmp->fk1);
 		pthread_mutex_unlock(tmp->fk2);
