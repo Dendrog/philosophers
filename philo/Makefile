@@ -2,11 +2,19 @@ NAME =          philo
 
 SRCS =  main.c\
 		ft_atoi.c\
+		arg.c\
+		eat.c\
+		fork.c\
+		ft_sleep.c\
+		logic.c\
+		sleep.c\
+		think.c\
+		utils.c
 
 HEADR = philo.h
 
 CC = cc
-CFLAGS = -Wall -Wextra -Werror #-g -fsanitize=thread
+CFLAGS = -Wall -Wextra -Werror
 
 OBJS = $(SRCS:.c=.o)
 
