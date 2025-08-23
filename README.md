@@ -18,6 +18,8 @@ make
 # 실행 예시
 ./philo number_of_philosophers time_to_die time_to_eat time_to_sleep [number_of_times_each_philosopher_must_eat]
 ```
+## 결과
+<img width="455" height="467" alt="image" src="https://github.com/user-attachments/assets/e40a6c39-874e-4c93-9208-e732aad164d3" />
 
-## 결과 시각화
+## 결과 시각화 (위의 결과와 다른 값)
 <img width="1924" height="478" alt="image" src="https://github.com/user-attachments/assets/e20f4e89-b181-4a65-9a91-bd348d21d8e9" />
